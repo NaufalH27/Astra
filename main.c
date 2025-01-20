@@ -2,10 +2,52 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include <netinet/in.h>
-#include <string.h>
-#include <errno.h>
-#include <poll.h> 
-#include<unistd.h>
+#include "string.h"
+#include "errno.h"
+#include "poll.h"
+#include "unistd.h"
+#include "pthread.h"
+
+
+struct response_args {
+    int fd;
+    int buffer_size;
+};
+
+void *response_worker(void *arguments) {
+    struct response_args *args = (struct response_args *)arguments;
+    if (args->fd == -1) {
+       perror("invalid file descriptor");
+       close(args->fd);
+       return NULL;
+    }    
+    if (args->buffer_size < 0) {
+        fprintf(stderr, "Invalid buffer size\n"); 
+        close(args->fd);
+        return NULL;
+    }
+    
+    char context_buffer[args->buffer_size]; 
+    int bytes_read = recv(args->fd, context_buffer, args->buffer_size - 1, 0);
+    context_buffer[bytes_read] = '\0';
+    if (bytes_read == -1) {
+        perror("failed to read context");
+        close(args->fd);
+        return NULL;
+    }
+
+    ssize_t sent = send(args->fd, context_buffer, bytes_read, 0);
+    if (sent == -1) {
+        perror("failed to send response");
+        close(args->fd);
+        return NULL;
+    }
+    printf("data send succesfully to client\n"); 
+    close(args->fd);
+    return NULL;
+    
+}
+
 
 int main() {
 
@@ -46,24 +88,23 @@ int main() {
             continue;
         }
 
-        if (fds[0].revents & POLLIN) {
+        if ((fds[0].revents & POLLIN) ) {
             int acceptfd = accept(fds[0].fd,  NULL, NULL); 
             if (acceptfd == -1) {
                 perror("error accepting package");
                 continue;
             }
-            char buffer[1024];
-            int byte_read = read(acceptfd, buffer, sizeof(buffer) - 1);
-            if (byte_read == -1) {
-                perror("failed to read package");
-            } else {
-                buffer[byte_read] = '\0';
-                printf("%s\n", buffer);
-            }
+            struct response_args args;
+            args.fd = acceptfd,
+            args.buffer_size = 1024;
             
-            printf("%d\n",acceptfd);
+            pthread_t workers;
+            if (pthread_create(&workers, NULL, &response_worker, (void *)&args) != 0) {
+                perror("failed to invoke workers");
+            } else {
+                pthread_join(workers, NULL); 
+            }
         }
-        
     }
     return 0;
 }
