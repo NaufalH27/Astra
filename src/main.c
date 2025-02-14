@@ -1,68 +1,51 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <poll.h>
-#include <pthread.h>
-#include <string.h>
 #include <stdio.h>
-#include "workers.h"
+#include <sys/epoll.h>
+#include "epoll_helper.h"
 
+// CONFIG
+#define IP_ADDRESS "127.0.0.1"
+#define PORT 8080
 
-
-
+#define MAX_CONN 1000
+#define MAX_EVENTS MAX_CONN + 1
+#define POLL_TIMEOUT 5000
 
 int main() {
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        perror("socket creation failed");
+    int listenerfd = create_ipv4_listener(IP_ADDRESS, PORT);
+    if (listenerfd == -1) {
+        perror("failed to create ipv4 listener");
         return 1;
     }
-    
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(struct sockaddr_in));
-    addr.sin_family = AF_INET;  
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    addr.sin_port = htons(8080); 
-    int binding = bind(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
-    if (binding == -1){
-        perror("socket bind failed");
+
+    int epollfd = epoll_create(MAX_EVENTS);    
+    if (epollfd == -1) {
+        perror("epoll creation failed");
         return 1;
-    }
-    
-    int listener = listen(sockfd,1);
-    if (listener == -1) {
-        perror("marking socket as listener failed");
-        return 1;
-    }
-    
-    struct pollfd fds[1];
-    fds[0].fd = sockfd; 
-    fds[0].events = POLLIN;
-    fds[0].revents = 0;
-    
+    } 
+
+    struct epoll_event listener_events = {
+        .events = EPOLLIN, 
+        .data.fd = listenerfd 
+    };
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, listenerfd, &listener_events);    
+
+    struct epoll_event events[MAX_EVENTS];
+
     while (1) {
-        int socket_poll = poll(fds, 1, 5000);
-        if (socket_poll == -1) {
+        int nfds = epoll_wait(epollfd, events, MAX_EVENTS, POLL_TIMEOUT);
+        if (nfds == -1) {
             perror("POLL ERROR");
-            return 1;
-        } else if (socket_poll == 0) {
+        } else if (nfds == 0) {
             continue;
         }
 
-        if ((fds[0].revents & POLLIN) ) {
-            int acceptfd = accept(fds[0].fd,  NULL, NULL); 
-            if (acceptfd == -1) {
-                perror("error accepting package");
-                continue;
-            }
-            struct worker_args args;
-            args.fd = acceptfd,
-            args.buffer_size = 5 * 1024 * 1024;
-            
-            pthread_t workers;
-            if (pthread_create(&workers, NULL, &worker, (void *)&args) != 0) {
-                perror("failed to invoke workers");
+        for (int i = 0; i <= nfds; i++) {
+            if (events[i].events & EPOLLIN && events[i].data.fd == listenerfd) {
+                accept_handler(events[i].data.fd, epollfd);
             } else {
-                pthread_join(workers, NULL); 
+                if (events[i].events & EPOLLIN) {
+                    reuse_handler(events[i].data.fd);
+                }
             }
         }
     }

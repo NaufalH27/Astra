@@ -59,3 +59,14 @@ void *worker(void *arguments) {
     return NULL;
     
 }
+//     struct worker_args args;
+//     args.fd = acceptfd,
+//     args.buffer_size = 5 * 1024 * 1024;
+//     
+//     pthread_t workers;
+//     if (pthread_create(&workers, NULL, &worker, (void *)&args) != 0) {
+//         perror("failed to invoke workers");
+//     } else {
+//         pthread_join(workers, NULL); 
+//     }
+

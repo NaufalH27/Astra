@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 
-SRCS = main.c workers.c
+SRCS = main.c workers.c epoll_helper.c
 SRCDIR = src
 OBJDIR = target
 OBJS = $(SRCS:%.c=$(OBJDIR)/%.o)
