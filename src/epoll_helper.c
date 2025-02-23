@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "task_queue.h"
+
 int create_ipv4_listener(const char *ip, const int port) {
     int listenerfd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenerfd == -1) {
@@ -57,7 +59,7 @@ int create_ipv4_listener(const char *ip, const int port) {
     return listenerfd; 
 }
 
-void accept_handler(int listenerfd, int epollfd) {
+void accept_handler(int listenerfd, int epollfd, task_queue *task_queue) {
     while (1) {
         int clientfd = accept(listenerfd, NULL, NULL);
         if (clientfd == -1) {
@@ -74,6 +76,7 @@ void accept_handler(int listenerfd, int epollfd) {
             .data.fd = clientfd
         };
         epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &client_events);
+        append_task(task_queue, clientfd); 
     }
 }
 
