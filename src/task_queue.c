@@ -2,16 +2,12 @@
 
 #include <stdlib.h>
 
-task_queue* create_task_queue() {
-    task_queue *queue = (task_queue*) malloc(sizeof(task_queue));
-    if (queue == NULL) {
-        return NULL;
-    }
-
-    queue->head = NULL;
-    queue->tail = NULL;
-    queue->size = 0;
-    return queue;
+task_queue create_task_queue() {
+    task_queue q;
+    q.head = NULL;
+    q.tail = NULL;
+    q.size = 0;
+    return q;
 }
 
 int append_task(task_queue *queue, int acceptfd) {

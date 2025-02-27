@@ -1,8 +1,18 @@
 #include "workers.h"
+#include "task_queue.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
+
+worker_pool_RR create_worker_pool_roundrobin() {
+    worker_pool_RR worker_pool;
+    for (int i = 0; i < WORKER_POOL_SIZE; i++) {
+        worker_pool.workers[i].status = WIDLE;
+        worker_pool.workers[i].t_queue = create_task_queue();
+    }
+    return worker_pool;
+}
 
 ssize_t recv_all(int sock, void *buffer, size_t length) {
     size_t total_received = 0;
@@ -38,35 +48,4 @@ ssize_t send_all(int sock, const void *buffer, size_t length) {
 }
 
 
-
-void *worker(void *arguments) {
-    struct worker_args *args = (struct worker_args *)arguments;
-    if (args->fd == -1) {
-       perror("invalid file descriptor");
-       close(args->fd);
-       return NULL;
-    }    
-    if (args->buffer_size < 0) {
-        fprintf(stderr, "Invalid buffer size\n"); 
-        close(args->fd);
-        return NULL;
-    }
-    
-    char package_buffer[args->buffer_size];
-    char message[] = "test"; 
-   
-    close(args->fd);
-    return NULL;
-    
-}
-//     struct worker_args args;
-//     args.fd = acceptfd,
-//     args.buffer_size = 5 * 1024 * 1024;
-//     
-//     pthread_t workers;
-//     if (pthread_create(&workers, NULL, &worker, (void *)&args) != 0) {
-//         perror("failed to invoke workers");
-//     } else {
-//         pthread_join(workers, NULL); 
-//     }
 

@@ -13,7 +13,7 @@ typedef struct task_queue {
     task_node *tail;
 } task_queue;
 
-task_queue* create_task_queue();
+task_queue create_task_queue();
 int append_task(task_queue *queue, int acceptfd); 
 int dequeue_task(task_queue *queue); 
 void del_queue(task_queue *queue); 
