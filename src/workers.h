@@ -21,5 +21,5 @@ typedef struct worker_pool_RR {
 } worker_pool_RR;
 
 worker_pool_RR create_worker_pool_roundrobin(); 
-
+void distribute_task(worker_pool_RR *worker_pool, int acceptfd);
 #endif

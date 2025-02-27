@@ -5,6 +5,6 @@
 
 int create_ipv4_listener(const char *ip, const int port); 
 void accept_handler(int listenerfd, int epollfd, worker_pool_RR *worker_pool);
-void reuse_handler(int clientfd);
+void reuse_handler(int clientfd, worker_pool_RR *const worker_pool); 
 
 #endif

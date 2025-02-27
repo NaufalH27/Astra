@@ -47,5 +47,13 @@ ssize_t send_all(int sock, const void *buffer, size_t length) {
     return total_sent;
 }
 
+void distribute_task(worker_pool_RR *worker_pool, int acceptfd) {
+    worker curr_worker = worker_pool->workers[worker_pool->index_ptr];
+    curr_worker.status = WBUSY;
+    append_task(&curr_worker.t_queue ,acceptfd);
+    worker_pool->index_ptr++;
+}
+
+
 
 
