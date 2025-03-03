@@ -2,7 +2,7 @@
 #define WORKERS_H
 
 #include "task_queue.h"
-#include <bits/pthreadtypes.h>
+#include <pthread.h>
 
 #define WIDLE 0
 #define WBUSY 1
@@ -10,6 +10,8 @@
 
 typedef struct worker {
     int status;
+    pthread_cond_t cond; 
+    pthread_mutex_t lock;
     pthread_t thread;
     task_queue t_queue; 
 } worker;
@@ -20,6 +22,7 @@ typedef struct worker_pool_RR {
     worker workers[WORKER_POOL_SIZE]; 
 } worker_pool_RR;
 
-worker_pool_RR create_worker_pool_roundrobin(); 
+int create_worker_pool_roundrobin(worker_pool_RR *worker_pool); 
 void distribute_task(worker_pool_RR *worker_pool, int acceptfd);
+void *RR_worker_routine(void *args); 
 #endif

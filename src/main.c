@@ -32,8 +32,12 @@ int main() {
     epoll_ctl(epollfd, EPOLL_CTL_ADD, listenerfd, &listener_events);    
     struct epoll_event events[MAX_EVENTS];
     
-    worker_pool_RR worker_pool = create_worker_pool_roundrobin();     
-    
+    worker_pool_RR worker_pool;
+    int wp_s = create_worker_pool_roundrobin(&worker_pool);     
+    if (wp_s == -1) {
+        return 1;
+    }
+
     while (1) {
         int nfds = epoll_wait(epollfd, events, MAX_EVENTS, POLL_TIMEOUT);
         if (nfds == -1) {
@@ -48,7 +52,7 @@ int main() {
                 accept_handler(events[i].data.fd, epollfd, &worker_pool);
             } else {
                 if (events[i].events & EPOLLIN) {
-                    reuse_handler(events[i].data.fd);
+                    reuse_handler(events[i].data.fd, &worker_pool);
                 }
             }
         }

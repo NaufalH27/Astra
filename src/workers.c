@@ -1,17 +1,66 @@
 #include "workers.h"
 #include "task_queue.h"
+#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
 
-worker_pool_RR create_worker_pool_roundrobin() {
-    worker_pool_RR worker_pool;
-    for (int i = 0; i < WORKER_POOL_SIZE; i++) {
-        worker_pool.workers[i].status = WIDLE;
-        worker_pool.workers[i].t_queue = create_task_queue();
-    }
-    return worker_pool;
+int create_worker_pool_roundrobin(worker_pool_RR *worker_pool) {
+    for (int i = 0; i < WORKER_POOL_SIZE; i++) { 
+        worker *w = &worker_pool->workers[i];
+        pthread_cond_init(&w->cond, NULL);
+        pthread_mutex_init(&w->lock, NULL);
+        w->status = WIDLE; 
+        w->t_queue = create_task_queue();
+        if((pthread_create(&w->thread, NULL, &RR_worker_routine , (void *)w)) != 0) {
+            return -1;
+        }
+    } 
+    worker_pool->index_ptr = 0;
+    return 0;
+}
+
+void *RR_worker_routine(void *args) {
+    if (args == NULL) {
+        pthread_exit((void *)1);
+    } 
+
+    printf("successfully create worker thread %lu\n", pthread_self());
+    worker *w = (worker *) args;
+    while (1) {
+        pthread_mutex_lock(&w->lock);
+        while (w->status == WIDLE) {
+            pthread_cond_wait(&w->cond, &w->lock);
+        }
+
+        int task_fd = dequeue_task(&w->t_queue);
+        if (task_fd == QERROR) {
+            printf("Thread %lu : failed to pull task from queue\n", pthread_self());
+        } else if (task_fd == QEMPTY) {
+            w->status = WIDLE; 
+            printf("Thread %lu : task empty\n", pthread_self());
+        } else {
+            printf("Thread %lu : successfully receive package %d\n", pthread_self(), task_fd);
+            // process request according to tcp/ip package received
+            // TODO : make implementation for processing the request
+        }
+        if (is_empty(&w->t_queue)) {
+            w->status = WIDLE; 
+        }
+        pthread_mutex_unlock(&w->lock);
+    } 
+    return NULL;
+}
+
+void distribute_task(worker_pool_RR *worker_pool, int acceptfd) {
+    worker *w = &worker_pool->workers[worker_pool->index_ptr];
+    pthread_mutex_lock(&w->lock);
+    append_task(&w->t_queue, acceptfd);
+    w->status = WBUSY;
+    pthread_cond_signal(&w->cond); 
+    pthread_mutex_unlock(&w->lock);
+    worker_pool->index_ptr = (worker_pool->index_ptr + 1) % WORKER_POOL_SIZE;
 }
 
 ssize_t recv_all(int sock, void *buffer, size_t length) {
@@ -46,14 +95,4 @@ ssize_t send_all(int sock, const void *buffer, size_t length) {
     }
     return total_sent;
 }
-
-void distribute_task(worker_pool_RR *worker_pool, int acceptfd) {
-    worker curr_worker = worker_pool->workers[worker_pool->index_ptr];
-    curr_worker.status = WBUSY;
-    append_task(&curr_worker.t_queue ,acceptfd);
-    worker_pool->index_ptr++;
-}
-
-
-
 
