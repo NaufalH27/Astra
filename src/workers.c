@@ -9,10 +9,11 @@
 #include "task_queue.h"
 
 int create_worker_pool_roundrobin(worker_pool_RR *worker_pool, int pool_size) {
-    worker_pool->workers = malloc(sizeof(struct worker) * pool_size);
+    worker_pool->workers = (worker *) malloc(sizeof(worker) * pool_size);
     if (worker_pool->workers == NULL) {
         return -1;
     }
+    worker_pool->pool_size = pool_size;
     for (int i = 0; i < pool_size; i++) { 
         worker *w = &worker_pool->workers[i];
         pthread_cond_init(&w->cond, NULL);

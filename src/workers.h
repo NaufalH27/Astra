@@ -19,6 +19,7 @@ typedef struct worker {
 typedef struct worker_pool_RR {
     int index_ptr; 
     worker *workers; 
+    int pool_size;
 } worker_pool_RR;
 
 int create_worker_pool_roundrobin(worker_pool_RR *worker_pool, int pool_size);

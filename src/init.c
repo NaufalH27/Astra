@@ -48,7 +48,10 @@ int init_context(server_context *const ctx_buf, const server_cfg cfg) {
     }
 
     ctx_buf->events = (struct epoll_event *)malloc(sizeof(struct epoll_event) * epoll_size);
-    
+    if (ctx_buf->events == NULL) {
+        return -1;
+    }
+    ctx_buf->event_size = epoll_size;
     return 0;
 }
 
@@ -74,7 +77,7 @@ void accept_conn(int listenerfd, int epollfd) {
 
 void server_start(server_context *ctx) {
     while (1) {
-        int nfds = epoll_wait(ctx->epollfd, ctx->events, sizeof(&ctx->events), POLL_TIMEOUT);
+        int nfds = epoll_wait(ctx->epollfd, ctx->events, ctx->event_size, POLL_TIMEOUT);
         if (nfds == -1) {
             perror("POLL ERROR");
             continue;
@@ -88,7 +91,7 @@ void server_start(server_context *ctx) {
                 accept_conn(e.data.fd, ctx->epollfd);
             } else {
                 if (e.events & EPOLLIN) {
-                    distribute_task(&ctx->worker_pool, e.data.fd, sizeof(ctx->worker_pool));
+                    distribute_task(&ctx->worker_pool, e.data.fd, ctx->worker_pool.pool_size);
                 }
             }
         }
