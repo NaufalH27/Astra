@@ -91,7 +91,7 @@ void server_start(server_context *ctx) {
                 accept_conn(e.data.fd, ctx->epollfd);
             } else {
                 if (e.events & EPOLLIN) {
-                    distribute_task(&ctx->worker_pool, e.data.fd, ctx->worker_pool.pool_size);
+                    distribute_task(&ctx->worker_pool, e.data.fd);
                 }
             }
         }

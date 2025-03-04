@@ -9,10 +9,15 @@
 #include "task_queue.h"
 
 int create_worker_pool_roundrobin(worker_pool_RR *worker_pool, int pool_size) {
+    if (pool_size < 0) {
+        return -1;
+    }
+
     worker_pool->workers = (worker *) malloc(sizeof(worker) * pool_size);
     if (worker_pool->workers == NULL) {
         return -1;
     }
+
     worker_pool->pool_size = pool_size;
     for (int i = 0; i < pool_size; i++) { 
         worker *w = &worker_pool->workers[i];
@@ -56,14 +61,14 @@ void *RR_worker_routine(void *args) {
     return NULL;
 }
 
-void distribute_task(worker_pool_RR *worker_pool, int acceptfd, int pool_size) {
+void distribute_task(worker_pool_RR *worker_pool, int acceptfd) {
     worker *w = &worker_pool->workers[worker_pool->index_ptr];
     pthread_mutex_lock(&w->lock);
     append_task(&w->t_queue, acceptfd);
     w->status = WBUSY;
     pthread_cond_signal(&w->cond); 
     pthread_mutex_unlock(&w->lock);
-    worker_pool->index_ptr = (worker_pool->index_ptr + 1) % pool_size;
+    worker_pool->index_ptr = (worker_pool->index_ptr + 1) % worker_pool->pool_size;
 }
 
 ssize_t recv_all(int sock, void *buffer, size_t length) {

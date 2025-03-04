@@ -23,6 +23,6 @@ typedef struct worker_pool_RR {
 } worker_pool_RR;
 
 int create_worker_pool_roundrobin(worker_pool_RR *worker_pool, int pool_size);
-void distribute_task(worker_pool_RR *worker_pool, int acceptfd, int pool_size); 
+void distribute_task(worker_pool_RR *worker_pool, int acceptfd); 
 void *RR_worker_routine(void *args); 
 #endif
