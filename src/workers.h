@@ -6,7 +6,7 @@
 
 #define WIDLE 0
 #define WBUSY 1
-#define WORKER_POOL_SIZE 1000 
+#define WORKER_POOL_SIZE 10
 
 typedef struct worker {
     int status;

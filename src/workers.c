@@ -26,7 +26,6 @@ void *RR_worker_routine(void *args) {
         pthread_exit((void *)1);
     } 
 
-    printf("successfully create worker thread %lu\n", pthread_self());
     worker *w = (worker *) args;
     while (1) {
         pthread_mutex_lock(&w->lock);
@@ -41,12 +40,9 @@ void *RR_worker_routine(void *args) {
             w->status = WIDLE; 
             printf("Thread %lu : task empty\n", pthread_self());
         } else {
-            printf("Thread %lu : successfully receive package %d\n", pthread_self(), task_fd);
-            // process request according to tcp/ip package received
+            printf("Thread %lu : successfully receive package from %d\n", pthread_self(), task_fd);
+            // process the request according to tcp/ip package received
             // TODO : make implementation for processing the request
-        }
-        if (is_empty(&w->t_queue)) {
-            w->status = WIDLE; 
         }
         pthread_mutex_unlock(&w->lock);
     } 
