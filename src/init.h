@@ -9,6 +9,7 @@ typedef struct server_cfg {
     int port;
     int max_conn;
     int poll_timeout;
+    int worker_pool_size;
 } server_cfg;
 
 typedef struct server_context {

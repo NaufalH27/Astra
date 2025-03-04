@@ -41,7 +41,7 @@ int init_context(server_context *const ctx_buf, const server_cfg cfg) {
     };
     epoll_ctl(ctx_buf->epollfd, EPOLL_CTL_ADD, ctx_buf->listenerfd, &listener_events);
 
-    int wp_s = create_worker_pool_roundrobin(&ctx_buf->worker_pool);     
+    int wp_s = create_worker_pool_roundrobin(&ctx_buf->worker_pool, cfg.worker_pool_size); 
     if (wp_s == -1) {
         printf("failed to create worker pool");
         return -1;
@@ -88,7 +88,7 @@ void server_start(server_context *ctx) {
                 accept_conn(e.data.fd, ctx->epollfd);
             } else {
                 if (e.events & EPOLLIN) {
-                    distribute_task(&ctx->worker_pool, e.data.fd);
+                    distribute_task(&ctx->worker_pool, e.data.fd, sizeof(ctx->worker_pool));
                 }
             }
         }

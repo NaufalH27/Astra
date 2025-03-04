@@ -1,13 +1,19 @@
 #include "workers.h"
-#include "task_queue.h"
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
 
-int create_worker_pool_roundrobin(worker_pool_RR *worker_pool) {
-    for (int i = 0; i < WORKER_POOL_SIZE; i++) { 
+#include "task_queue.h"
+
+int create_worker_pool_roundrobin(worker_pool_RR *worker_pool, int pool_size) {
+    worker_pool->workers = malloc(sizeof(struct worker) * pool_size);
+    if (worker_pool->workers == NULL) {
+        return -1;
+    }
+    for (int i = 0; i < pool_size; i++) { 
         worker *w = &worker_pool->workers[i];
         pthread_cond_init(&w->cond, NULL);
         pthread_mutex_init(&w->lock, NULL);
@@ -49,14 +55,14 @@ void *RR_worker_routine(void *args) {
     return NULL;
 }
 
-void distribute_task(worker_pool_RR *worker_pool, int acceptfd) {
+void distribute_task(worker_pool_RR *worker_pool, int acceptfd, int pool_size) {
     worker *w = &worker_pool->workers[worker_pool->index_ptr];
     pthread_mutex_lock(&w->lock);
     append_task(&w->t_queue, acceptfd);
     w->status = WBUSY;
     pthread_cond_signal(&w->cond); 
     pthread_mutex_unlock(&w->lock);
-    worker_pool->index_ptr = (worker_pool->index_ptr + 1) % WORKER_POOL_SIZE;
+    worker_pool->index_ptr = (worker_pool->index_ptr + 1) % pool_size;
 }
 
 ssize_t recv_all(int sock, void *buffer, size_t length) {

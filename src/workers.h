@@ -6,7 +6,6 @@
 
 #define WIDLE 0
 #define WBUSY 1
-#define WORKER_POOL_SIZE 10
 
 typedef struct worker {
     int status;
@@ -19,10 +18,10 @@ typedef struct worker {
 // round robin implementation for worker pool
 typedef struct worker_pool_RR {
     int index_ptr; 
-    worker workers[WORKER_POOL_SIZE]; 
+    worker *workers; 
 } worker_pool_RR;
 
-int create_worker_pool_roundrobin(worker_pool_RR *worker_pool); 
-void distribute_task(worker_pool_RR *worker_pool, int acceptfd);
+int create_worker_pool_roundrobin(worker_pool_RR *worker_pool, int pool_size);
+void distribute_task(worker_pool_RR *worker_pool, int acceptfd, int pool_size); 
 void *RR_worker_routine(void *args); 
 #endif
