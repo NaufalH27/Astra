@@ -16,7 +16,8 @@ server_cfg init_cfg() {
         .ip_adress = IP_ADDRESS,
         .port = PORT,
         .max_conn = MAX_CONN,
-        .poll_timeout = POLL_TIMEOUT
+        .poll_timeout = POLL_TIMEOUT,
+        .worker_pool_size = WORKER_POOL_SIZE
     };
 }
 

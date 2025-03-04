@@ -9,7 +9,7 @@
 #include "task_queue.h"
 
 int create_worker_pool_RR(worker_pool_RR *pool_buffer, int pool_size) {
-    if (pool_size < 0) {
+    if (pool_size <= 0) {
         return -1;
     }
 
