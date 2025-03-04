@@ -1,5 +1,4 @@
 #include "epoll_helper.h"
-#include "workers.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -58,7 +57,7 @@ int create_ipv4_listener(const char *ip, const int port) {
     return listenerfd; 
 }
 
-void accept_handler(int listenerfd, int epollfd, worker_pool_RR *const worker_pool) {
+void accept_handler(int listenerfd, int epollfd) {
     while (1) {
         int clientfd = accept(listenerfd, NULL, NULL);
         if (clientfd == -1) {
@@ -75,11 +74,6 @@ void accept_handler(int listenerfd, int epollfd, worker_pool_RR *const worker_po
             .data.fd = clientfd
         };
         epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &client_events);
-        distribute_task(worker_pool, clientfd);
     }
-}
-
-void reuse_handler(int clientfd, worker_pool_RR *const worker_pool) {
-    distribute_task(worker_pool, clientfd);
 }
 

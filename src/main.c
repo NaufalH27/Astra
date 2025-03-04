@@ -10,7 +10,6 @@
 #define MAX_CONN 1000
 #define MAX_EVENTS MAX_CONN + 1
 #define POLL_TIMEOUT 5000
-#define WORKER_POOL_SIZE 1000
 
 int main() {
     int listenerfd = create_ipv4_listener(IP_ADDRESS, PORT);
@@ -49,10 +48,10 @@ int main() {
 
         for (int i = 0; i <= nfds; i++) {
             if (events[i].events & EPOLLIN && events[i].data.fd == listenerfd) {
-                accept_handler(events[i].data.fd, epollfd, &worker_pool);
+                accept_handler(events[i].data.fd, epollfd);
             } else {
                 if (events[i].events & EPOLLIN) {
-                    reuse_handler(events[i].data.fd, &worker_pool);
+                    distribute_task(&worker_pool, events[i].data.fd);
                 }
             }
         }
