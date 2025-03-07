@@ -42,7 +42,7 @@ int init_context(server_context *const ctx_buf, const server_cfg cfg) {
     };
     epoll_ctl(ctx_buf->epollfd, EPOLL_CTL_ADD, ctx_buf->listenerfd, &listener_events);
 
-    int wp_s = create_worker_pool_RR(&ctx_buf->worker_pool, cfg.worker_pool_size); 
+    int wp_s = create_worker_pool(&ctx_buf->worker_pool, cfg.worker_pool_size); 
     if (wp_s == -1) {
         printf("failed to create worker pool");
         return -1;

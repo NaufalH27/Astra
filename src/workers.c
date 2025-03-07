@@ -8,7 +8,7 @@
 
 #include "task_queue.h"
 
-int create_worker_pool_RR(worker_pool *pool_buffer, int pool_size) {
+int create_worker_pool(worker_pool *pool_buffer, int pool_size) {
     if (pool_size <= 0) {
         return -1;
     }
@@ -25,14 +25,14 @@ int create_worker_pool_RR(worker_pool *pool_buffer, int pool_size) {
         pthread_mutex_init(&w->lock, NULL);
         w->status = WIDLE; 
         w->t_queue = create_task_queue();
-        if((pthread_create(&w->thread, NULL, &RR_worker_routine , (void *)w)) != 0) {
+        if((pthread_create(&w->thread, NULL, &worker_routine , (void *)w)) != 0) {
             return -1;
         }
     } 
     return 0;
 }
 
-void *RR_worker_routine(void *args) {
+void *worker_routine(void *args) {
     if (args == NULL) {
         pthread_exit((void *)1);
     } 

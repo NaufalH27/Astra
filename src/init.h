@@ -17,7 +17,7 @@ typedef struct server_context {
     int epollfd;
     struct epoll_event *events;
     int event_size;
-    worker_pool_RR worker_pool;
+    worker_pool worker_pool;
 } server_context;
 
 server_cfg init_cfg();

@@ -22,5 +22,5 @@ typedef struct worker_pool {
 
 int create_worker_pool(worker_pool *pool_buffer, int pool_size);
 void distribute_task(worker_pool *pool_buffer, int acceptfd); 
-void *RR_worker_routine(void *args); 
+void *worker_routine(void *args); 
 #endif
