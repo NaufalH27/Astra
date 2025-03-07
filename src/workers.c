@@ -21,6 +21,7 @@ int create_worker_pool(worker_pool *pool_buffer, int pool_size) {
     pool_buffer->pool_size = pool_size;
     for (int i = 0; i < pool_size; i++) { 
         worker *w = &pool_buffer->workers[i];
+        w->id = i+1;
         pthread_cond_init(&w->cond, NULL);
         pthread_mutex_init(&w->lock, NULL);
         w->status = WIDLE; 
@@ -46,12 +47,11 @@ void *worker_routine(void *args) {
 
         int task_fd = dequeue_task(&w->t_queue);
         if (task_fd == QERROR) {
-            printf("Thread %lu : failed to pull task from queue\n", pthread_self());
+            printf("Thread %lu : failed to pull task from queue\n", w->id);
         } else if (task_fd == QEMPTY) {
             w->status = WIDLE; 
-            printf("Thread %lu : task empty\n", pthread_self());
         } else {
-            printf("Thread %lu : successfully receive package from %d\n", pthread_self(), task_fd);
+            printf("Thread %lu : successfully receive package from %d\n", w->id, task_fd);
             // process the request according to tcp/ip package received
             // TODO : make implementation for processing the request
         }

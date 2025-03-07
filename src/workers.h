@@ -8,6 +8,7 @@
 #define WBUSY 1
 
 typedef struct worker {
+    size_t id;
     int status;
     pthread_cond_t cond; 
     pthread_mutex_t lock;

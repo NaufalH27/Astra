@@ -86,7 +86,7 @@ void server_start(server_context *ctx) {
             continue;
         }
 
-        for (int i = 0; i <= nfds; i++) {
+        for (int i = 0; i < nfds; i++) {
             const struct epoll_event e = ctx->events[i];
             if (e.events & EPOLLIN && e.data.fd == ctx->listenerfd) {
                 accept_conn(e.data.fd, ctx->epollfd);
