@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 
-SRCS = main.c init.c port.c workers.c task_queue.c 
+SRCS = main.c init.c uintset.c port.c workers.c task_queue.c 
 SRCDIR = src
 OBJDIR = target
 OBJS = $(SRCS:%.c=$(OBJDIR)/%.o)

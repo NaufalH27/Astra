@@ -61,9 +61,9 @@ int is_exist_in_uintset(u_intset *s_buffer, size_t num) {
     }
 
     if(BITTEST(s_buffer->bitset, num) != 0) {
-        return 1;
-    } else {
         return 0;
+    } else {
+        return 1;
     }
 }
 
