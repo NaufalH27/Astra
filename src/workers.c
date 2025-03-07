@@ -8,7 +8,7 @@
 
 #include "task_queue.h"
 
-int create_worker_pool_RR(worker_pool_RR *pool_buffer, int pool_size) {
+int create_worker_pool_RR(worker_pool *pool_buffer, int pool_size) {
     if (pool_size <= 0) {
         return -1;
     }
@@ -29,7 +29,6 @@ int create_worker_pool_RR(worker_pool_RR *pool_buffer, int pool_size) {
             return -1;
         }
     } 
-    pool_buffer->index_ptr = 0;
     return 0;
 }
 
@@ -61,14 +60,17 @@ void *RR_worker_routine(void *args) {
     return NULL;
 }
 
-void distribute_task(worker_pool_RR *pool_buffer, int acceptfd) {
-    worker *w = &pool_buffer->workers[pool_buffer->index_ptr];
+void distribute_task(worker_pool *pool_buffer, int acceptfd) {
+    // initialize round robin counter
+    static int rr_counter = 0;
+
+    worker *w = &pool_buffer->workers[rr_counter];
     pthread_mutex_lock(&w->lock);
     append_task(&w->t_queue, acceptfd);
     w->status = WBUSY;
     pthread_cond_signal(&w->cond); 
     pthread_mutex_unlock(&w->lock);
-    pool_buffer->index_ptr = (pool_buffer->index_ptr + 1) % pool_buffer->pool_size;
+    rr_counter = (rr_counter + 1) % pool_buffer->pool_size;
 }
 
 ssize_t recv_all(int sock, void *buffer, size_t length) {

@@ -15,14 +15,12 @@ typedef struct worker {
     task_queue t_queue; 
 } worker;
 
-// round robin implementation for worker pool
-typedef struct worker_pool_RR {
-    int index_ptr; 
+typedef struct worker_pool {
     worker *workers; 
     int pool_size;
-} worker_pool_RR;
+} worker_pool;
 
-int create_worker_pool_RR(worker_pool_RR *pool_buffer, int pool_size);
-void distribute_task(worker_pool_RR *pool_buffer, int acceptfd); 
+int create_worker_pool(worker_pool *pool_buffer, int pool_size);
+void distribute_task(worker_pool *pool_buffer, int acceptfd); 
 void *RR_worker_routine(void *args); 
 #endif
