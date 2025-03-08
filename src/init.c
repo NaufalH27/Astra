@@ -60,7 +60,7 @@ void accept_conn(int listenerfd, int epollfd) {
     while (1) {
         int clientfd = accept(listenerfd, NULL, NULL);
         if (clientfd == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EMFILE) {
                 break;
             } else {
                 perror("accept error");
