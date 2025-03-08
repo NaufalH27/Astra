@@ -27,6 +27,7 @@ int create_worker_pool(worker_pool *pool_buffer, int pool_size) {
         w->status = WIDLE; 
         w->t_queue = create_task_queue();
         if((pthread_create(&w->thread, NULL, &worker_routine , (void *)w)) != 0) {
+            perror("error creating thread");
             return -1;
         }
     } 
@@ -51,9 +52,22 @@ void *worker_routine(void *args) {
         } else if (task_fd == QEMPTY) {
             w->status = WIDLE; 
         } else {
-            printf("Thread %lu : successfully receive package from %d\n", w->id, task_fd);
-            // process the request according to tcp/ip package received
-            // TODO : make implementation for processing the request
+            char buf[100];
+            int s = read(task_fd, &buf, sizeof(buf));
+            if (s == 0) {
+                printf("Thead %lu : closed %d\n", w->id ,task_fd);
+                close(task_fd);
+            } else if (s == -1) {
+                printf("error happend forcing to close connection %d \n", task_fd);
+                close(task_fd);
+            } else {
+                printf("Thread %lu : successfully receive package from %d\n", w->id, task_fd);
+                usleep(100000);
+                buf[s] = '\0';
+                printf("%s\n", buf);
+                char m[] = "Hey Client";
+                send(task_fd, m, sizeof(m), 0);
+            }
         }
         pthread_mutex_unlock(&w->lock);
     } 
