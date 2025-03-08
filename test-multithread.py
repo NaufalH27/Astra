@@ -28,7 +28,7 @@ def send_tcp_request(thread_id):
     finally:
         client_socket.close()
 
-num_threads = 10
+num_threads = 1000
 
 threads = []
 for i in range(num_threads):
