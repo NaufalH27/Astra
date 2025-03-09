@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 host = '127.0.0.1'
 port = 8080
@@ -9,16 +10,11 @@ message = "Hey server!"
 def send_tcp_request(thread_id):
     """Send a single TCP request."""
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
-    client_socket.settimeout(5)
 
     try:
         client_socket.connect((host, port))
         print(f"Thread {thread_id}: Connection established!")
-
         client_socket.sendall(message.encode())
-        print(f"Thread {thread_id}: Data sent!")
-
         data = client_socket.recv(1024)
         print(f"Thread {thread_id}: Received: {data.decode()}")
     except socket.timeout:
@@ -28,7 +24,7 @@ def send_tcp_request(thread_id):
     finally:
         client_socket.close()
 
-num_threads = 1000
+num_threads = 100000
 
 threads = []
 for i in range(num_threads):
@@ -36,7 +32,10 @@ for i in range(num_threads):
     threads.append(thread)
     thread.start()
 
+start = time.time()
 for thread in threads:
     thread.join()
 
-print("All threads have completed.")
+end = time.time()
+length = end - start
+print("All threads have completed in " + str(length))
