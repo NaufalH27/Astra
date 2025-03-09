@@ -6,26 +6,26 @@
 #include <stdio.h>
 #include <sys/socket.h>
 
-#include "task_queue.h"
+#include "uintqueue.h"
 
-int create_worker_pool(worker_pool *pool_buffer, int pool_size) {
-    if (pool_size <= 0) {
+int create_worker_pool(worker_pool *wpool, int size) {
+    if (size <= 0) {
         return -1;
     }
 
-    pool_buffer->workers = (worker *) malloc(sizeof(worker) * pool_size);
-    if (pool_buffer->workers == NULL) {
+    wpool->workers = (worker *) malloc(sizeof(worker) * size);
+    if (wpool->workers == NULL) {
         return -1;
     }
 
-    pool_buffer->pool_size = pool_size;
-    for (int i = 0; i < pool_size; i++) { 
-        worker *w = &pool_buffer->workers[i];
+    wpool->pool_size = size;
+    for (int i = 0; i < size; i++) { 
+        worker *w = &wpool->workers[i];
         w->id = i+1;
         pthread_cond_init(&w->cond, NULL);
         pthread_mutex_init(&w->lock, NULL);
         w->status = WIDLE; 
-        w->t_queue = create_task_queue();
+        w->cli_sockq = create_uint_queue();
         if((pthread_create(&w->thread, NULL, &worker_routine , (void *)w)) != 0) {
             perror("error creating thread");
             return -1;
@@ -46,27 +46,26 @@ void *worker_routine(void *args) {
             pthread_cond_wait(&w->cond, &w->lock);
         }
 
-        int task_fd = dequeue_task(&w->t_queue);
-        if (task_fd == QERROR) {
-            printf("Thread %lu : failed to pull task from queue\n", w->id);
-        } else if (task_fd == QEMPTY) {
+        int clisock = uintq_dequeue(&w->cli_sockq);
+        if (clisock == QERROR) {
+            printf("Thread %lu : failed to pull client socket from queue\n", w->id);
+        } else if (clisock == QEMPTY) {
             w->status = WIDLE; 
         } else {
             char buf[100];
-            int s = read(task_fd, &buf, sizeof(buf));
+            int s = read(clisock, &buf, sizeof(buf));
             if (s == 0) {
-                printf("Thead %lu : closed %d\n", w->id ,task_fd);
-                close(task_fd);
+                printf("Thead %lu : closed %d\n", w->id ,clisock);
+                close(clisock);
             } else if (s == -1) {
-                printf("error happend forcing to close connection %d \n", task_fd);
-                close(task_fd);
+                printf("error happend forcing to close socket %d \n", clisock);
+                close(clisock);
             } else {
-                printf("Thread %lu : successfully receive package from %d\n", w->id, task_fd);
-                usleep(100000);
+                printf("Thread %lu : successfully receive package from %d\n", w->id, clisock);
                 buf[s] = '\0';
                 printf("%s\n", buf);
                 char m[] = "Hey Client";
-                send(task_fd, m, sizeof(m), 0);
+                send(clisock, m, sizeof(m), 0);
             }
         }
         pthread_mutex_unlock(&w->lock);
@@ -74,17 +73,17 @@ void *worker_routine(void *args) {
     return NULL;
 }
 
-void distribute_task(worker_pool *pool_buffer, int acceptfd) {
+void distribute_clientsock(worker_pool *wpool, int client_socket) {
     // initialize round robin counter
     static int rr_counter = 0;
 
-    worker *w = &pool_buffer->workers[rr_counter];
+    worker *w = &wpool->workers[rr_counter];
     pthread_mutex_lock(&w->lock);
-    append_task(&w->t_queue, acceptfd);
+    uintq_append(&w->cli_sockq, client_socket);
     w->status = WBUSY;
     pthread_cond_signal(&w->cond); 
     pthread_mutex_unlock(&w->lock);
-    rr_counter = (rr_counter + 1) % pool_buffer->pool_size;
+    rr_counter = (rr_counter + 1) % wpool->pool_size;
 }
 
 ssize_t recv_all(int sock, void *buffer, size_t length) {

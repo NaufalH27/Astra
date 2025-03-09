@@ -1,7 +1,7 @@
 #ifndef WORKERS_H
 #define WORKERS_H
 
-#include "task_queue.h"
+#include "uintqueue.h"
 #include <pthread.h>
 
 #define WIDLE 0
@@ -13,7 +13,7 @@ typedef struct worker {
     pthread_cond_t cond; 
     pthread_mutex_t lock;
     pthread_t thread;
-    task_queue t_queue; 
+    uint_queue cli_sockq; 
 } worker;
 
 typedef struct worker_pool {
@@ -21,7 +21,7 @@ typedef struct worker_pool {
     int pool_size;
 } worker_pool;
 
-int create_worker_pool(worker_pool *pool_buffer, int pool_size);
-void distribute_task(worker_pool *pool_buffer, int acceptfd); 
+int create_worker_pool(worker_pool *wpool, int wpool_size);
+void distribute_clientsock(worker_pool *wpool, int client_socket); 
 void *worker_routine(void *args); 
 #endif
